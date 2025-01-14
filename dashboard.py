@@ -18,3 +18,7 @@ def create_daily_orders_df(df):
     }, inplace=True)
     
     return daily_orders_df
+
+def create_sum_order_items_df(df):
+    sum_order_items_df = df.groupby("product_name").quantity_x.sum().sort_values(ascending=False).reset_index()
+    return sum_order_items_df
