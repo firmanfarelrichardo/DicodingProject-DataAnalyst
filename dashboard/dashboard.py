@@ -5,19 +5,19 @@ import streamlit as st
 
 sns.set(style='darkgrid')
 
-df = pd.read_csv('all_data.csv')
+all_df = pd.read_csv('all_data.csv')
 
-df['day_dteday'] = pd.to_datetime(df['day_dteday'])
-df['hour_dteday'] = pd.to_datetime(df['hour_dteday'])
+all_df['day_dteday'] = pd.to_datetime(all_df['day_dteday'])
+all_df['hour_dteday'] = pd.to_datetime(all_df['hour_dteday'])
 
-season_summary = df.groupby('day_season_name')['day_cnt'].sum().sort_values(ascending=False).reset_index()
+season_summary = all_df.groupby('day_season_name')['day_cnt'].sum().sort_values(ascending=False).reset_index()
 
-daily_season_trend = df.groupby(['day_dteday', 'day_season_name'])['day_cnt'].sum().reset_index()
+daily_season_trend = all_df.groupby(['day_dteday', 'day_season_name'])['day_cnt'].sum().reset_index()
 
-hourly_trend = df.groupby(['hour_hr', 'day_season_name'])['hour_cnt'].mean().reset_index()
+hourly_trend = all_df.groupby(['hour_hr', 'day_season_name'])['hour_cnt'].mean().reset_index()
 
-min_date = df['day_dteday'].min()
-max_date = df['day_dteday'].max()
+min_date = all_df['day_dteday'].min()
+max_date = all_df['day_dteday'].max()
 
 # Sidebar
 with st.sidebar:
@@ -25,7 +25,7 @@ with st.sidebar:
     st.header("Filter Data")
     start_date, end_date = st.date_input("Rentang Waktu", [min_date, max_date], min_value=min_date, max_value=max_date)
 
-df_filtered = df[(df['day_dteday'] >= pd.to_datetime(start_date)) & (df['day_dteday'] <= pd.to_datetime(end_date))]
+df_filtered = all_df[(all_df['day_dteday'] >= pd.to_datetime(start_date)) & (all_df['day_dteday'] <= pd.to_datetime(end_date))]
 
 st.title("Dashboard Penyewaan Sepeda")
 
