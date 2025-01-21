@@ -1,97 +1,60 @@
-import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import streamlit as st
 
-# Page configuration
-st.set_page_config(page_title="Bike Sharing Dashboard", layout="wide")
+sns.set(style='darkgrid')
 
-# Title and description
-st.title("Bike Sharing Dashboard")
-st.markdown(
-    """
-    ### Analisis Data Penyewaan Sepeda
-    Dashboard ini menampilkan tren penyewaan sepeda berdasarkan dataset harian dan jam.
-    Dataset digunakan untuk menjawab pertanyaan bisnis terkait musim, waktu, dan tren harian.
-    """
-)
+df = pd.read_csv('all_data.csv')
 
-# Sidebar for date range selection
-st.sidebar.header("Pengaturan Rentang Waktu")
-default_start_date = "2011-01-01"
-default_end_date = "2012-12-31"
-date_range = st.sidebar.date_input(
-    "Pilih rentang waktu:",
-    [pd.to_datetime(default_start_date), pd.to_datetime(default_end_date)],
-    min_value=pd.to_datetime(default_start_date),
-    max_value=pd.to_datetime(default_end_date),
-)
+df['day_dteday'] = pd.to_datetime(df['day_dteday'])
+df['hour_dteday'] = pd.to_datetime(df['hour_dteday'])
 
-# File upload
-uploaded_file = st.file_uploader("Upload dataset (day.csv or hour.csv)", type=["csv"])
+season_summary = df.groupby('day_season_name')['day_cnt'].sum().sort_values(ascending=False).reset_index()
 
-if uploaded_file:
-    # Load dataset
-    data = pd.read_csv(uploaded_file)
+daily_season_trend = df.groupby(['day_dteday', 'day_season_name'])['day_cnt'].sum().reset_index()
 
-    # Ensure necessary columns exist
-    if "day_dteday" in data.columns:
-        data['day_dteday'] = pd.to_datetime(data['day_dteday'])
+hourly_trend = df.groupby(['hour_hr', 'day_season_name'])['hour_cnt'].mean().reset_index()
 
-        # Filter data by date range
-        start_date, end_date = date_range
-        filtered_data = data[(data['day_dteday'] >= start_date) & (data['day_dteday'] <= end_date)]
+min_date = df['day_dteday'].min()
+max_date = df['day_dteday'].max()
 
-        st.write("## Data Preview")
-        st.dataframe(filtered_data.head())
+# Sidebar
+with st.sidebar:
+    st.image("https://github.com/dicodingacademy/assets/raw/main/logo.png", use_column_width=True)
+    st.header("Filter Data")
+    start_date, end_date = st.date_input("Rentang Waktu", [min_date, max_date], min_value=min_date, max_value=max_date)
 
-        # Display dataset summary
-        st.write("## Data Summary")
-        st.write(filtered_data.describe())
+df_filtered = df[(df['day_dteday'] >= pd.to_datetime(start_date)) & (df['day_dteday'] <= pd.to_datetime(end_date))]
 
-        # Visualization & Explanatory Analysis
-        st.write("## Visualization & Explanatory Analysis")
+st.title("Dashboard Penyewaan Sepeda")
 
-        # Question 1: Season analysis
-        if "season" in filtered_data.columns:
-            st.write("### Musim dengan Penyewaan Terbanyak dan Tersedikit")
-            season_counts = filtered_data["season"].value_counts().sort_index()
-            fig, ax = plt.subplots()
-            sns.barplot(x=season_counts.index, y=season_counts.values, ax=ax)
-            ax.set_title("Jumlah Penyewaan Berdasarkan Musim")
-            ax.set_xlabel("Musim")
-            ax.set_ylabel("Jumlah Penyewaan")
-            st.pyplot(fig)
+st.header("Penyewaan Sepeda Berdasarkan Musim")
+fig, ax = plt.subplots(figsize=(10, 5))
+sns.barplot(data=season_summary, x='day_season_name', y='day_cnt', palette='coolwarm', ax=ax)
+ax.set_title('Total Penyewaan Sepeda Berdasarkan Musim')
+ax.set_xlabel('Musim')
+ax.set_ylabel('Jumlah Penyewaan')
+st.pyplot(fig)
 
-        # Question 2: Daily trend by season
-        if "season" in filtered_data.columns and "cnt" in filtered_data.columns:
-            st.write("### Penyewaan Sepeda Harian Berdasarkan Musim")
-            fig, ax = plt.subplots()
-            sns.lineplot(x="day_dteday", y="cnt", hue="season", data=filtered_data, ax=ax)
-            ax.set_title("Tren Penyewaan Harian Berdasarkan Musim")
-            ax.set_xlabel("Tanggal")
-            ax.set_ylabel("Jumlah Penyewaan")
-            st.pyplot(fig)
+st.header("Tren Penyewaan Sepeda Harian Berdasarkan Musim")
+daily_season_trend_filtered = df_filtered.groupby(['day_dteday', 'day_season_name'])['day_cnt'].sum().reset_index()
+fig, ax = plt.subplots(figsize=(14, 7))
+sns.lineplot(data=daily_season_trend_filtered, x='day_dteday', y='day_cnt', hue='day_season_name', palette='coolwarm', ax=ax)
+ax.set_title('Tren Penyewaan Sepeda Harian')
+ax.set_xlabel('Tanggal')
+ax.set_ylabel('Jumlah Penyewaan')
+ax.legend(title='Musim')
+st.pyplot(fig)
 
-        # Question 3: Hourly trend analysis
-        if "hour" in filtered_data.columns and "cnt" in filtered_data.columns:
-            st.write("### Pengaruh Jam terhadap Penyewaan Sepeda")
-            hourly_data = filtered_data.groupby("hour")["cnt"].mean().reset_index()
-            fig, ax = plt.subplots()
-            sns.lineplot(x="hour", y="cnt", data=hourly_data, ax=ax)
-            ax.set_title("Rata-rata Penyewaan Berdasarkan Jam")
-            ax.set_xlabel("Jam")
-            ax.set_ylabel("Rata-rata Penyewaan")
-            st.pyplot(fig)
+st.header("Pengaruh Jam Terhadap Penyewaan Sepeda")
+hourly_trend_filtered = df_filtered.groupby(['hour_hr', 'day_season_name'])['hour_cnt'].mean().reset_index()
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.lineplot(data=hourly_trend_filtered, x='hour_hr', y='hour_cnt', hue='day_season_name', palette='coolwarm', ax=ax)
+ax.set_title('Rata-rata Penyewaan Sepeda Per Jam')
+ax.set_xlabel('Jam')
+ax.set_ylabel('Rata-rata Penyewaan')
+ax.legend(title='Musim')
+st.pyplot(fig)
 
-        # Additional insights
-        st.write("### Insight Penting")
-        st.markdown(
-            "- **Musim dengan Penyewaan Terbanyak:** Musim yang paling sering muncul di grafik.\n"
-            "- **Tren Harian:** Penyewaan cenderung meningkat pada musim tertentu.\n"
-            "- **Jam Sibuk:** Jam-jam dengan rata-rata penyewaan tertinggi.\n"
-        )
-    else:
-        st.error("Dataset tidak memiliki kolom 'day_dteday'. Harap upload dataset yang sesuai.")
-else:
-    st.info("Silakan upload file dataset untuk memulai analisis.")
+st.caption('Dashboard ini dibuat berdasarkan analisis data penyewaan sepeda.')
