@@ -5,7 +5,7 @@ import streamlit as st
 
 sns.set(style='darkgrid')
 
-all_df = pd.read_csv('all_data.csv')
+all_df = pd.read_csv('dashboard/all_data.csv')
 
 all_df['day_dteday'] = pd.to_datetime(all_df['day_dteday'])
 all_df['hour_dteday'] = pd.to_datetime(all_df['hour_dteday'])
