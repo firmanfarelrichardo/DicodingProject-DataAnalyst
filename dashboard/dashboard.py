@@ -21,7 +21,7 @@ max_date = df['day_dteday'].max()
 
 # Sidebar
 with st.sidebar:
-    st.image("https://github.com/dicodingacademy/assets/raw/main/logo.png", use_column_width=True)
+    st.image("https://img.freepik.com/free-vector/flat-design-data-logo-template_23-2149202844.jpg", use_column_width=True)
     st.header("Filter Data")
     start_date, end_date = st.date_input("Rentang Waktu", [min_date, max_date], min_value=min_date, max_value=max_date)
 
